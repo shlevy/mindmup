@@ -22,7 +22,7 @@ in {
 
         default = 80;
 
-        type = types.string;
+        type = types.int;
       };
 
       googleAnalyticsId = mkOption {
