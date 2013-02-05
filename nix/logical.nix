@@ -19,7 +19,7 @@
 
       getAWSCredentialsFromEC2Metadata = true;
 
-      s3BucketName = resources.s3Buckets.mindmup.name;
+      s3BucketName = resources.s3Buckets."mindmup-bucket".name;
 
       s3UploadFolder = "maps";
 
