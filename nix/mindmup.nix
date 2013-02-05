@@ -1,4 +1,4 @@
-{ config, pkgs }:
+{ config, pkgs, ... }:
 
 with pkgs.lib;
 
@@ -6,7 +6,7 @@ let
   cfg = config.services.mindmup;
 
   usesKeys = (! cfg.getAWSCredentialsFromEC2Metadata) &&
-    ((subString 0 (stringLength "/run/keys") cfg.awsSecretKeyFile) == "/run/keys")
+    ((subString 0 (stringLength "/run/keys") cfg.awsSecretKeyFile) == "/run/keys");
 in {
   options = {
     services.mindmup = {
@@ -149,7 +149,7 @@ in {
       environment = {
         RACK_ENV = cfg.rackEnvironment;
 
-        GOOGLE_ANALYTICS_ACCOUNT = cfg.googleAnalyticsAccount;
+        GOOGLE_ANALYTICS_ACCOUNT = cfg.googleAnalyticsId;
 
         S3_BUCKET_NAME = cfg.s3BucketName;
 
@@ -171,7 +171,7 @@ in {
 
         CURRENT_MAP_DATA_VERSION = "a1";
 
-        GEM_PATH = with pkgs.lib.rubyGems; makeSearchPath pkgs.ruby.gemPath [
+        GEM_PATH = with pkgs.rubyLibs; makeSearchPath pkgs.ruby.gemPath [
           sinatra_1_3_2
           uuid
           aws_sdk
@@ -184,7 +184,7 @@ in {
       preStart = ''
         mkdir -m 700 -p /var/lib/mindmup
         if ! test -f /var/lib/mindmup/session.secret; then
-            cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 > /var/lib/mindmup/session.secret
+            dd if=/dev/urandom count=1 bs=1024 | ${pkgs.utillinux}/bin/hexdump -ve '1/1 "%.2x"' > /var/lib/mindmup/session.secret
             chmod 400 /var/lib/mindmup/session.secret
         fi
       '';
