@@ -5,7 +5,8 @@ with pkgs.lib;
 let
   cfg = config.services.mindmup;
 
-  usesKeys = (subString 0 (stringLength "/run/keys") cfg.awsSecretKeyFile) == "/run/keys";
+  usesKeys = (! cfg.getAWSCredentialsFromEC2Metadata) &&
+    ((subString 0 (stringLength "/run/keys") cfg.awsSecretKeyFile) == "/run/keys")
 in {
   options = {
     services.mindmup = {
@@ -37,6 +38,14 @@ in {
         description = "S3 bucket to store files in";
 
         type = types.string;
+      };
+
+      getAWSCredentialsFromEC2Metadata = mkOption {
+        description = "Whether or not to fetch the AWS credentials from EC2 metadata";
+
+        default = false;
+
+        type = types.bool;
       };
 
       awsKeyId = mkOption {
@@ -144,8 +153,6 @@ in {
 
         S3_BUCKET_NAME = cfg.s3BucketName;
 
-        S3_KEY_ID = cfg.awsKeyId;
-
         S3_UPLOAD_FOLDER = cfg.s3UploadFolder;
 
         S3_WEBSITE = cfg.s3Website;
@@ -170,6 +177,8 @@ in {
           aws_sdk
           thin
         ];
+      } // optionalAttrs (! cfg.getAWSCredentialsFromEC2Metadata) {
+        S3_KEY_ID = cfg.awsKeyId;
       };
 
       preStart = ''
@@ -181,7 +190,9 @@ in {
       '';
 
       script = ''
-        export S3_SECRET_KEY=$(cat ${cfg.awsSecretKeyFile})
+        ${optionalString (! cfg.getAWSCredentialsFromEC2Metadata)
+          "export S3_SECRET_KEY=$(cat ${cfg.awsSecretKeyFile})"
+        }
         export RACK_SESSION_SECRET=$(cat /var/lib/mindmup/session.secret)
         cd ${../.}
         exec ${pkgs.rubyLibs.rack}/bin/rackup config.ru -p ${toString cfg.port}
