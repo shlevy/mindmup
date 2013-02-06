@@ -26,7 +26,7 @@ in {
       };
       port = mkOption {
         description = "The port to listen on";
-        default = 80;
+        default = 5000;
         type = types.int;
       };
       googleAnalyticsId = mkOption {
@@ -95,7 +95,7 @@ in {
       };
     };
   };
-  config = mkIf cfg.enable {
+  config = mkMerge [ (mkIf cfg.enable {
     systemd.services.mindmup = {
       after = [ "network.target" ] ++ optional usesKeys "keys.target";
       requires = optional usesKeys "keys.target";
@@ -136,5 +136,15 @@ in {
       '';
       restartTriggers = rubyClosure ++ [ ../. ];
     };
-  };
+  }) (mkIf (cfg.enable && builtins.lessThan 1024 cfg.port) {
+    users.extraUsers.mindmup = {
+      description = "Mindmup user";
+      group = "mindmup";
+    };
+    users.extraGroups.mindmup = {};
+    systemd.services.mindmup.serviceConfig = {
+      USER = "mindmup";
+      GROUP = "mindmup";
+    };
+  }) ];
 }
