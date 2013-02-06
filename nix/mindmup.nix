@@ -206,7 +206,7 @@ in {
         exec ${pkgs.rubyLibs.rack}/bin/rackup config.ru -p ${toString cfg.port}
       '';
 
-      restartIfChanged = rubyClosure ++ [ ../. ];
+      restartTriggers = rubyClosure ++ [ ../. ];
     };
   };
 }

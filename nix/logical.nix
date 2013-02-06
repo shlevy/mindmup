@@ -1,4 +1,4 @@
-{ environment ? "production"
+{ environment ? "development"
 , googleAnalyticsId ? ""
 , jotFormId ? ""
 , shareThisId ? ""
