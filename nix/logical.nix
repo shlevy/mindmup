@@ -1,6 +1,5 @@
-{
-  network.name = "mindmup";
-  machine = { config, resources, ... }: {
+let
+  mindmup = { config, resources, ... }: {
     require = [ ./mindmup.nix ];
     ec2.metadata = true;
     services.mindmup = {
@@ -8,19 +7,29 @@
       s3BucketName = resources.s3Buckets."mindmup-bucket".name;
       siteURL = "http://${config.networking.publicIPv4}/";
     };
+  };
+in {
+  network.description = "mindmup";
+  backend1 = mindmup;
+  backend2 = mindmup;
+  proxy = { nodes, ... }: {
+    deployment.encryptedLinksTo = [ "backend1" "backend2" ];
     services.httpd = {
       enable = true;
       adminAddr = "charon@example.com";
+      extraModules = [ "proxy_balancer" ];
       extraConfig = ''
-        <Proxy *>
-         Order deny,allow
-         Allow from all
+        <Proxy balancer://cluster>
+          Allow from all
+          BalancerMember http://backend1-encrypted:${builtins.toString nodes.backend1.config.services.mindmup.port} retry=0 route=1
+          BalancerMember http://backend2-encrypted:${builtins.toString nodes.backend2.config.services.mindmup.port} retry=0 route=2
+          ProxySet stickysession=ROUTEID
         </Proxy>
 
         ProxyPreserveHost On
 
-        ProxyPass / http://machine:${builtins.toString config.services.mindmup.port}/ retry=5
-        ProxyPassReverse / http://machine:${builtins.toString config.services.mindmup.port}/
+        ProxyPass / balancer://cluster/
+        ProxyPassReverse / balancer://cluster/
       '';
     };
   };

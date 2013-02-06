@@ -1,5 +1,23 @@
 { region ? "us-east-1" }:
-{
+let
+  base = { resources, ... }: {
+    deployment = {
+      targetEnv = "ec2";
+      ec2 = {
+        inherit region;
+        accessKeyId = "mindmup";
+        keyPair = resources.ec2KeyPairs."mindmup-key-pair".name;
+      };
+    };
+  };
+  mindmup = { resources, ... }: let _base = base { inherit resources; }; in {
+    deployment = {
+      inherit (_base.deployment) targetEnv;
+
+      ec2 = _base.deployment.ec2 // { instanceProfile = resources.iamRoles."mindmup-role".name; };
+    };
+  };
+in {
   resources = {
     s3Buckets."mindmup-bucket" = {
       inherit region;
@@ -35,15 +53,7 @@
       }'';
     };
   };
-  machine = { resources, ... }: {
-    deployment = {
-      targetEnv = "ec2";
-      ec2 = {
-        inherit region;
-        accessKeyId = "mindmup";
-        keyPair = resources.ec2KeyPairs."mindmup-key-pair".name;
-        instanceProfile = resources.iamRoles."mindmup-role".name;
-      };
-    };
-  };
+  backend1 = mindmup;
+  backend2 = mindmup;
+  proxy = base;
 }
