@@ -1,19 +1,15 @@
 { region ? "us-east-1" }:
 let
-  base = { resources, ... }: {
+  mindmup = { resources, ... }: {
     deployment = {
       targetEnv = "ec2";
       ec2 = {
         inherit region;
         accessKeyId = "mindmup";
         keyPair = resources.ec2KeyPairs."mindmup-key-pair".name;
+        instanceProfile = resources.iamRoles."mindmup-role".name;
       };
     };
-  };
-  mindmup = { resources, pkgs, ... }: {
-    config = pkgs.lib.mkMerge [ {
-      deployment.ec2.instanceProfile = resources.iamRoles."mindmup-role".name;
-    } (base {inherit resources;}) ];
   };
 in {
   resources = {
@@ -53,5 +49,14 @@ in {
   };
   backend1 = mindmup;
   backend2 = mindmup;
-  proxy = base;
+  proxy = { resources, ... }: {
+    deployment = {
+      targetEnv = "ec2";
+      ec2 = {
+        inherit region;
+        accessKeyId = "mindmup";
+        keyPair = resources.ec2KeyPairs."mindmup-key-pair".name;
+      };
+    };
+  };
 }
