@@ -22,12 +22,10 @@
       "Statement": [
         {
           "Action": [
-            "s3:CreateBucket",
-            "s3:DeleteBucket",
             "s3:ListAllMyBuckets"
           ],
-          "Effect": "Deny",
-          "Resource": ["*"]
+          "Effect": "Allow",
+          "Resource": ["arn:aws:s3:::*"]
         },
         {
           "Action": [
@@ -35,7 +33,8 @@
           ],
           "Effect": "Allow",
           "Resource": [
-            "arn:aws:s3:::${resources.s3Buckets."mindmup-bucket".name}"
+            "arn:aws:s3:::${resources.s3Buckets."mindmup-bucket".name}",
+            "arn:aws:s3:::${resources.s3Buckets."mindmup-bucket".name}/*"
           ]
         }
       ]
