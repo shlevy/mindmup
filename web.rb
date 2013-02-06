@@ -24,6 +24,11 @@ configure do
   AWS.config(:access_key_id=>settings.s3_key_id, :secret_access_key=>settings.s3_secret_key)
   s3=AWS::S3.new()
   set :s3_bucket, s3.buckets[settings.s3_bucket_name]
+  settings.s3_bucket.objects["#{settings.s3_upload_folder}/new.json"].write('{"title":"Press Space or double-click to edit"}')
+  default_obj = settings.s3_bucket.objects["#{settings.s3_upload_folder}/#{settings.default_map}.json"]
+  unless default_obj.exists?
+    default_obj.write('{}')
+  end
   set :root, File.dirname(__FILE__)
   set :cache_prevention_key, settings.key_id_generator.generate(:compact)
   set :static, true
