@@ -5,6 +5,19 @@ with pkgs.lib;
 let
   cfg = config.services.mindmup;
 
+  rubyClosure = map ({ drv, ... }: drv) (genericClosure {
+    startSet = with pkgs.rubyLibs; map (drv: { key = drv.outPath; inherit drv; }) [
+      sinatra_1_3_2
+      uuid
+      aws_sdk
+      thin
+    ];
+
+    operator = { key, drv }: map (drv:
+      { key = drv.outPath; inherit drv; }
+    ) (filter (p: p.isRubyGem or false) (drv.propagatedBuildNativeInputs or []));
+  });
+
   usesKeys = (! cfg.getAWSCredentialsFromEC2Metadata) &&
     ((subString 0 (stringLength "/run/keys") cfg.awsSecretKeyFile) == "/run/keys");
 in {
@@ -171,12 +184,7 @@ in {
 
         CURRENT_MAP_DATA_VERSION = "a1";
 
-        GEM_PATH = with pkgs.rubyLibs; makeSearchPath pkgs.ruby.gemPath [
-          sinatra_1_3_2
-          uuid
-          aws_sdk
-          thin
-        ];
+        GEM_PATH = makeSearchPath pkgs.ruby.gemPath rubyClosure;
       } // optionalAttrs (! cfg.getAWSCredentialsFromEC2Metadata) {
         S3_KEY_ID = cfg.awsKeyId;
       };
@@ -197,6 +205,8 @@ in {
         cd ${../.}
         exec ${pkgs.rubyLibs.rack}/bin/rackup config.ru -p ${toString cfg.port}
       '';
+
+      restartIfChanged = rubyClosure ++ [ ../. ];
     };
   };
 }
