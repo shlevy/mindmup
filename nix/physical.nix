@@ -10,12 +10,10 @@ let
       };
     };
   };
-  mindmup = { resources, ... }: let _base = base { inherit resources; }; in {
-    deployment = {
-      inherit (_base.deployment) targetEnv;
-
-      ec2 = _base.deployment.ec2 // { instanceProfile = resources.iamRoles."mindmup-role".name; };
-    };
+  mindmup = { resources, pkgs, ... }: {
+    config = pkgs.lib.mkMerge [ {
+      deployment.ec2.instanceProfile = resources.iamRoles."mindmup-role".name;
+    } (base {inherit resources;}) ];
   };
 in {
   resources = {
