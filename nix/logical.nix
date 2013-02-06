@@ -12,6 +12,8 @@
   machine = { config, resources, ... }: {
     require = [ ./mindmup.nix ];
 
+    ec2.metadata = true;
+
     services.mindmup = {
       enable = true;
 
