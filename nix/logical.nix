@@ -25,7 +25,7 @@
 
       s3UploadFolder = "maps";
 
-      siteURL = "http://${config.networking.publicIPv4}";
+      siteURL = "http://${config.networking.publicIPv4}/";
 
       rackEnvironment = environment;
     };
