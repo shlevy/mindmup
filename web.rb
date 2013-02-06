@@ -3,7 +3,6 @@ require 'sinatra'
 require 'uuid'
 require 'aws-sdk'
 
-require File.dirname(__FILE__)+'/lib/s3_policy_signer.rb'
 require File.dirname(__FILE__)+'/lib/freemind_format.rb'
 
 configure do
@@ -77,9 +76,15 @@ get "/publishingConfig" do
   @s3_key=settings.s3_upload_folder+"/" + @s3_upload_identifier + ".json"
   @s3_result_url= settings.base_url + "s3/" + @s3_upload_identifier
   @s3_content_type="text/plain"
-  signer=S3PolicySigner.new
-  @policy=signer.signed_policy settings.s3_secret_key, settings.s3_key_id, settings.s3_bucket_name,
-                               @s3_key, @s3_result_url, settings.s3_max_upload_size*1024, @s3_content_type, settings.s3_form_expiry
+
+  @policy = settings.s3_bucket.presigned_post(
+    exipres: settings.s3_form_expiry,
+    content_type: @s3_content_type,
+    success_action_redirect: @s3_result_url,
+    content_length: 0..settings.s3_max_upload_size*1024
+  ).where(:acl).is("public-read").
+    where(:key).starts_with(@s3_key).
+    fields
   erb :s3UploadConfig, :layout => false
 end
 
