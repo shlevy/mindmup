@@ -27,13 +27,6 @@ in {
         "Statement": [
           {
             "Action": [
-              "s3:ListAllMyBuckets"
-            ],
-            "Effect": "Allow",
-            "Resource": ["arn:aws:s3:::*"]
-          },
-          {
-            "Action": [
               "s3:*"
             ],
             "Effect": "Allow",
@@ -41,7 +34,7 @@ in {
               "arn:aws:s3:::${
                 resources.s3Buckets."mindmup-bucket".name}",
               "arn:aws:s3:::${
-                resources.s3Buckets."mindmup-bucket".name}/ *"
+                resources.s3Buckets."mindmup-bucket".name}/*"
             ]
           }
         ]
